@@ -41,6 +41,7 @@ function useInView(threshold = 0.15) {
 /*  主组件                                                              */
 /* ------------------------------------------------------------------ */
 export default function WeddingInvitation() {
+  const [envelopePhase, setEnvelopePhase] = useState<'closed'|'opening'|'done'>('closed')
   const [musicPlaying, setMusicPlaying] = useState(false)
   const [guestName, setGuestName] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -58,26 +59,17 @@ export default function WeddingInvitation() {
     if (saved) {
       try { setGuests(JSON.parse(saved)) } catch { /* ignore */ }
     }
-
-    // 用户首次交互（触摸/滑动/点击）时自动播放音乐
-    const tryPlay = () => {
-      const a = audioRef.current
-      if (a && a.paused) {
-        a.play().then(() => setMusicPlaying(true)).catch(() => {})
-      }
-      document.removeEventListener('touchstart', tryPlay)
-      document.removeEventListener('scroll', tryPlay, true)
-      document.removeEventListener('click', tryPlay)
-    }
-    document.addEventListener('touchstart', tryPlay, { once: true, passive: true })
-    document.addEventListener('scroll', tryPlay, { once: true, capture: true })
-    document.addEventListener('click', tryPlay, { once: true })
-    return () => {
-      document.removeEventListener('touchstart', tryPlay)
-      document.removeEventListener('scroll', tryPlay, true)
-      document.removeEventListener('click', tryPlay)
-    }
   }, [])
+
+  const handleOpenEnvelope = () => {
+    if (envelopePhase !== 'closed') return
+    setEnvelopePhase('opening')
+    const a = audioRef.current
+    if (a) {
+      a.play().then(() => setMusicPlaying(true)).catch(() => {})
+    }
+    setTimeout(() => setEnvelopePhase('done'), 2000)
+  }
 
   const toggleMusic = useCallback(() => {
     const a = audioRef.current
@@ -102,9 +94,75 @@ export default function WeddingInvitation() {
 
   /* ==================== JSX ==================== */
   return (
-    <div className="snap-container hide-scrollbar">
+    <>
       {/* 背景音乐 */}
       <audio ref={audioRef} src="/music/bgm.mp3" loop preload="auto" />
+
+      {/* ======== 请柬信封欢迎页 ======== */}
+      {envelopePhase !== 'done' && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+          style={{ background: 'linear-gradient(135deg, #FFF5F0 0%, #FFE8E0 50%, #FDD5C8 100%)' }}
+          onClick={handleOpenEnvelope}
+        >
+          {/* 信封整体 */}
+          <div className="envelope-wrapper" style={{ perspective: '1200px' }}>
+            <div className="relative w-[280px] h-[180px] mx-auto">
+
+              {/* 信封主体 */}
+              <div className="absolute inset-0 rounded-lg shadow-xl"
+                   style={{ background: 'linear-gradient(145deg, #9B1B30 0%, #7B0A24 100%)' }}>
+                {/* 信封底纹 */}
+                <div className="absolute inset-3 rounded border border-white/10" />
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/20 text-xs tracking-[0.3em]">INVITATION</div>
+              </div>
+
+              {/* 信封盖（翻转动画） */}
+              <div
+                className={`absolute top-0 left-0 right-0 h-[90px] origin-top transition-transform duration-1000 ease-in-out
+                           ${envelopePhase === 'opening' ? 'envelope-flap-open' : ''}`}
+                style={{ transformStyle: 'preserve-3d' }}
+              >
+                <div className="absolute inset-0"
+                     style={{
+                       background: 'linear-gradient(180deg, #B8566A 0%, #9B1B30 100%)',
+                       clipPath: 'polygon(0 0, 50% 100%, 100% 0)',
+                       borderRadius: '8px 8px 0 0',
+                     }} />
+                {/* 封口蜡印 */}
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full
+                              bg-gradient-to-br from-yellow-600 to-yellow-800 shadow-md
+                              flex items-center justify-center">
+                  <span className="text-white text-lg font-serif">囍</span>
+                </div>
+              </div>
+
+              {/* 请柬卡片（从信封中升起） */}
+              <div
+                className={`absolute left-4 right-4 bg-white rounded-lg shadow-lg
+                           flex flex-col items-center justify-center text-center
+                           transition-all duration-1000 ease-out
+                           ${envelopePhase === 'opening'
+                             ? 'envelope-card-rise'
+                             : 'top-[20px] h-[100px] opacity-80'}`}
+                style={envelopePhase !== 'opening' ? { top: '20px', height: '100px' } : undefined}
+              >
+                <p className="text-wedding-primary text-[10px] tracking-[0.3em] mb-1">WEDDING INVITATION</p>
+                <p className="text-wedding-text font-serif text-lg tracking-wider">{GROOM} & {BRIDE}</p>
+                <p className="text-wedding-text/50 text-[10px] mt-1">{WEDDING_DATE_SOLAR}</p>
+              </div>
+            </div>
+
+            {/* 提示文字 */}
+            <div className={`mt-10 text-center transition-opacity duration-500
+                           ${envelopePhase === 'opening' ? 'opacity-0' : 'opacity-100'}`}>
+              <p className="text-wedding-primary/60 text-sm tracking-wider animate-pulse">轻触打开请柬</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+    <div className={`snap-container hide-scrollbar ${envelopePhase !== 'done' ? 'hidden' : ''}`}>
 
       {/* -------- 右上角旋转碟片音乐按钮 -------- */}
       <button
@@ -459,6 +517,7 @@ export default function WeddingInvitation() {
         </div>
       </section>
     </div>
+    </>
   )
 }
 

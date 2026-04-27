@@ -73,6 +73,45 @@ body {
   animation-play-state: paused;
 }
 
+/* ===== Envelope Opening Animation ===== */
+@keyframes flapOpen {
+  0% {
+    transform: rotateX(0deg);
+  }
+  100% {
+    transform: rotateX(180deg);
+  }
+}
+
+@keyframes cardRise {
+  0% {
+    top: 20px;
+    height: 100px;
+    opacity: 0.8;
+  }
+  40% {
+    top: -120px;
+    height: 200px;
+    opacity: 1;
+  }
+  100% {
+    top: -160px;
+    height: 240px;
+    opacity: 1;
+  }
+}
+
+.envelope-flap-open {
+  animation: flapOpen 0.8s ease-in-out forwards;
+}
+
+.envelope-card-rise {
+  animation: cardRise 1.2s ease-out 0.5s forwards;
+  top: 20px;
+  height: 100px;
+  opacity: 0.8;
+}
+
 /* ===== Fade In Animations ===== */
 @keyframes fadeInUp {
   from {
