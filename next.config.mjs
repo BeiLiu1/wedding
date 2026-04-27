@@ -1,7 +1,4 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: 'export',
-  allowedDevOrigins: ['http://127.0.0.1'],
-}
+const nextConfig = {}
 
 export default nextConfig
