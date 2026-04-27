@@ -41,6 +41,7 @@ function useInView(threshold = 0.15) {
 /*  主组件                                                              */
 /* ------------------------------------------------------------------ */
 export default function WeddingInvitation() {
+  const [entered, setEntered] = useState(false)
   const [musicPlaying, setMusicPlaying] = useState(false)
   const [guestName, setGuestName] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -58,26 +59,15 @@ export default function WeddingInvitation() {
     if (saved) {
       try { setGuests(JSON.parse(saved)) } catch { /* ignore */ }
     }
+  }, [])
 
-    // 自动播放音乐：监听用户首次触摸/点击后立即播放
-    const autoPlay = () => {
-      const a = audioRef.current
-      if (a && a.paused) {
-        a.play().then(() => setMusicPlaying(true)).catch(() => {})
-      }
-      document.removeEventListener('touchstart', autoPlay)
-      document.removeEventListener('click', autoPlay)
-    }
-    // 先尝试直接播放（部分浏览器允许）
+  const handleEnter = () => {
     const a = audioRef.current
     if (a) {
-      a.play().then(() => setMusicPlaying(true)).catch(() => {
-        // 被浏览器拦截，等用户首次交互后自动播放
-        document.addEventListener('touchstart', autoPlay, { once: true })
-        document.addEventListener('click', autoPlay, { once: true })
-      })
+      a.play().then(() => setMusicPlaying(true)).catch(() => {})
     }
-  }, [])
+    setEntered(true)
+  }
 
   const toggleMusic = useCallback(() => {
     const a = audioRef.current
@@ -102,9 +92,38 @@ export default function WeddingInvitation() {
 
   /* ==================== JSX ==================== */
   return (
-    <div className="snap-container hide-scrollbar">
-      {/* 背景音乐 — 将 /music/bgm.mp3 放到 public/music/ 目录下 */}
+    <>
+      {/* 背景音乐 */}
       <audio ref={audioRef} src="/music/bgm.mp3" loop preload="auto" />
+
+      {/* ======== 欢迎入场页 ======== */}
+      {!entered && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center cursor-pointer"
+          style={{
+            background: 'linear-gradient(to bottom, #6B0620 0%, #9B1B30 50%, #B8566A 100%)',
+          }}
+          onClick={handleEnter}
+        >
+          <div className="text-center px-8">
+            <p className="text-[10px] tracking-[0.5em] text-white/40 uppercase mb-8">
+              Wedding Invitation
+            </p>
+            <div className="text-5xl text-white/90 font-serif xi-glow mb-8 select-none">囍</div>
+            <p className="text-xl text-white/80 tracking-widest mb-3 font-serif">
+              {GROOM} & {BRIDE}
+            </p>
+            <p className="text-sm text-white/50 tracking-wider mb-12">
+              诚邀您参加我们的婚礼
+            </p>
+            <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-white/30 text-white/70 text-sm tracking-wider animate-pulse">
+              点击进入
+            </div>
+          </div>
+        </div>
+      )}
+
+    <div className={`snap-container hide-scrollbar ${!entered ? 'hidden' : ''}`}>
 
       {/* -------- 右上角旋转碟片音乐按钮 -------- */}
       <button
@@ -459,6 +478,7 @@ export default function WeddingInvitation() {
         </div>
       </section>
     </div>
+    </>
   )
 }
 
