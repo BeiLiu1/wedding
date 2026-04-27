@@ -58,6 +58,25 @@ export default function WeddingInvitation() {
     if (saved) {
       try { setGuests(JSON.parse(saved)) } catch { /* ignore */ }
     }
+
+    // 自动播放音乐：监听用户首次触摸/点击后立即播放
+    const autoPlay = () => {
+      const a = audioRef.current
+      if (a && a.paused) {
+        a.play().then(() => setMusicPlaying(true)).catch(() => {})
+      }
+      document.removeEventListener('touchstart', autoPlay)
+      document.removeEventListener('click', autoPlay)
+    }
+    // 先尝试直接播放（部分浏览器允许）
+    const a = audioRef.current
+    if (a) {
+      a.play().then(() => setMusicPlaying(true)).catch(() => {
+        // 被浏览器拦截，等用户首次交互后自动播放
+        document.addEventListener('touchstart', autoPlay, { once: true })
+        document.addEventListener('click', autoPlay, { once: true })
+      })
+    }
   }, [])
 
   const toggleMusic = useCallback(() => {
